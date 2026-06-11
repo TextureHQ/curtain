@@ -1,0 +1,24 @@
+{
+  "name": "curtain",
+  "private": true,
+  "description": "Curtain — privacy-first synthetic identity overlay for safely demoing real customer data.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TextureHQ/curtain.git"
+  },
+  "workspaces": [
+    "packages/*",
+    "extension"
+  ],
+  "scripts": {
+    "build": "yarn workspaces foreach -Apt --no-private run build && yarn workspace @texturehq/curtain-extension run build:data",
+    "typecheck": "yarn workspaces foreach -Apt --no-private run typecheck",
+    "test": "yarn workspaces foreach -Apt run test",
+    "clean": "yarn workspaces foreach -Apt run clean || true"
+  },
+  "packageManager": "yarn@4.5.0",
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

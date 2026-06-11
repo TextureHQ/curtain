@@ -1,0 +1,53 @@
+{
+  "packVersion": "v1",
+  "packSeed": "curtain-avatars-v1-2024",
+  "generatedAt": "2026-01-09",
+  "totalImages": 27,
+  "buckets": {
+    "female_light": [
+      "female_light/avatar_0001.webp",
+      "female_light/avatar_0002.webp",
+      "female_light/avatar_0003.webp"
+    ],
+    "female_medium": [
+      "female_medium/avatar_0001.webp",
+      "female_medium/avatar_0002.webp",
+      "female_medium/avatar_0003.webp"
+    ],
+    "female_dark": [
+      "female_dark/avatar_0001.webp",
+      "female_dark/avatar_0002.webp",
+      "female_dark/avatar_0003.webp"
+    ],
+    "male_light": [
+      "male_light/avatar_0001.webp",
+      "male_light/avatar_0002.webp",
+      "male_light/avatar_0003.webp"
+    ],
+    "male_medium": [
+      "male_medium/avatar_0001.webp",
+      "male_medium/avatar_0002.webp",
+      "male_medium/avatar_0003.webp"
+    ],
+    "male_dark": [
+      "male_dark/avatar_0001.webp",
+      "male_dark/avatar_0002.webp",
+      "male_dark/avatar_0003.webp"
+    ],
+    "neutral_light": [
+      "neutral_light/avatar_0001.webp",
+      "neutral_light/avatar_0002.webp",
+      "neutral_light/avatar_0003.webp"
+    ],
+    "neutral_medium": [
+      "neutral_medium/avatar_0001.webp",
+      "neutral_medium/avatar_0002.webp",
+      "neutral_medium/avatar_0003.webp"
+    ],
+    "neutral_dark": [
+      "neutral_dark/avatar_0001.webp",
+      "neutral_dark/avatar_0002.webp",
+      "neutral_dark/avatar_0003.webp"
+    ]
+  }
+}

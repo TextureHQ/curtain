@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curtain - Validation Test Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #444ae1;
+      --brand-hover: #363ccb;
+      --bg: #f9fafb;
+      --bg-card: #ffffff;
+      --bg-muted: #f3f4f6;
+      --border: #e5e7eb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --text-heading: #374151;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h1 {
+      color: var(--brand);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .tab.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: white;
+    }
+
+    /* Main Layout */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Section */
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: var(--bg-muted);
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+
+    .section-header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .section-body {
+      padding: 1.5rem;
+    }
+
+    /* Test Grid */
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .test-card {
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+    }
+
+    .test-card h4 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .test-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .test-row:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+
+    .pii-value {
+      font-size: 0.9375rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      background: var(--border);
+    }
+
+    /* Static Data - Sidebar Nav */
+    .data-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .data-layout {
+        grid-template-columns: 1fr;
+      }
+      .data-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .data-nav a {
+        padding: 0.5rem 0.75rem !important;
+      }
+    }
+
+    .data-nav {
+      position: sticky;
+      top: 100px;
+      align-self: start;
+    }
+
+    .data-nav h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .data-nav a {
+      display: block;
+      padding: 0.5rem 0;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.15s;
+    }
+
+    .data-nav a:hover {
+      color: var(--brand);
+    }
+
+    .data-nav a.active {
+      color: var(--brand);
+      font-weight: 500;
+    }
+
+    /* Data Tables */
+    .data-section {
+      scroll-margin-top: 120px;
+      margin-bottom: 2rem;
+    }
+
+    .data-section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .data-section h3 .count {
+      background: var(--bg-muted);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+
+    .data-table td {
+      padding: 0.625rem 1rem;
+      border: 1px solid var(--border);
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+
+    .data-table tr:hover td {
+      background: var(--bg-muted);
+    }
+
+    .data-table .index {
+      color: var(--text-muted);
+      width: 50px;
+      text-align: center;
+    }
+
+    /* Gender badges */
+    .gender-badge {
+      display: inline-block;
+      padding: 0.125rem 0.375rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 3px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .gender-male {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .gender-female {
+      background: #fce7f3;
+      color: #be185d;
+    }
+
+    .gender-neutral {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-hover);
+      border-color: var(--brand-hover);
+      color: white;
+    }
+
+    /* Dynamic Test Area */
+    .dynamic-area {
+      min-height: 120px;
+      background: #fef9e7;
+      border: 2px dashed var(--warning);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .dynamic-area p {
+      color: #92400e;
+      font-size: 0.875rem;
+    }
+
+    /* Floating Controls */
+    .floating-controls {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      padding: 0.75rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border);
+    }
+
+    /* Entity Badge */
+    .entity-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      background: var(--brand);
+      color: white;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div>
+        <h1>Curtain Test Suite</h1>
+        <p>Validation tests and sample data reference</p>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="tests">Entity Tests</button>
+        <button class="tab" data-tab="data">Sample Data</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Tests Tab -->
+    <div id="tests" class="tab-content active">
+
+      <!-- Contact Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Contact Entity <span class="entity-badge">contact</span></h2>
+          <p>Tests for customer/contact PII masking</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>Contact #1 - Name Fields</h4>
+              <div class="test-row">
+                <span class="label">Full Name</span>
+                <span class="pii-value" data-pii-type="full-name" data-pii-entity="contact:test-contact-1">John Michael Smith</span>
+              </div>
+              <div class="test-row">
+                <span class="label">First Name</span>
+                <span class="pii-value" data-pii-type="first-name" data-pii-entity="contact:test-contact-1">John</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Last Name</span>
+                <span class="pii-value" data-pii-type="last-name" data-pii-entity="contact:test-contact-1">Smith</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Initials</span>
+                <span class="pii-value" data-pii-type="initials" data-pii-entity="contact:test-contact-1">JS</span>
+              </div>
+            </div>
+            <div class="test-card">
+              <h4>Contact #1 - Contact Info</h4>
+              <div class="test-row">
+                <span class="label">Email</span>
+                <span class="pii-value" data-pii-type="email" data-pii-entity="contact:test-contact-1">john.smith@example.com</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Phone</span>
+                <span class="pii-value" data-pii-type="phone" data-pii-entity="contact:test-contact-1">(415) 555-1234</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Avatar</span>
+                <img class="avatar" data-pii-type="avatar" data-pii-entity="contact:test-contact-1" src="https://i.pravatar.cc/48?u=john" alt="Avatar">
+              </div>
+            </div>
+            <div class="test-card">
+              <h4>Contact #2 - Different Identity</h4>
+              <div class="test-row">
+                <span class="label">Full Name</span>
+                <span class="pii-value" data-pii-type="full-name" data-pii-entity="contact:test-contact-2">Jane Elizabeth Doe</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Email</span>
+                <span class="pii-value" data-pii-type="email" data-pii-entity="contact:test-contact-2">jane.doe@company.com</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Phone</span>
+                <span class="pii-value" data-pii-type="phone" data-pii-entity="contact:test-contact-2">(650) 555-9876</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Site Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Site Entity <span class="entity-badge">site</span></h2>
+          <p>Street Address and City/State/ZIP have separate toggles</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>Street Address Toggle</h4>
+              <div class="test-row">
+                <span class="label">Address</span>
+                <span class="pii-value" data-pii-type="address" data-pii-entity="site:test-site-1">123 Main Street, Apt 4B</span>
+              </div>
+            </div>
+            <div class="test-card">
+              <h4>City/State/ZIP Toggle</h4>
+              <div class="test-row">
+                <span class="label">City</span>
+                <span class="pii-value" data-pii-type="city" data-pii-entity="site:test-site-1">San Francisco</span>
+              </div>
+              <div class="test-row">
+                <span class="label">State</span>
+                <span class="pii-value" data-pii-type="state" data-pii-entity="site:test-site-1">CA</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Postal Code</span>
+                <span class="pii-value" data-pii-type="postal-code" data-pii-entity="site:test-site-1">94102</span>
+              </div>
+              <div class="test-row">
+                <span class="label">City, State</span>
+                <span class="pii-value" data-pii-type="city-state" data-pii-entity="site:test-site-1">San Francisco, CA</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Full Location</span>
+                <span class="pii-value" data-pii-type="city-state-zip" data-pii-entity="site:test-site-1">San Francisco, CA 94102</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Coordinates</span>
+                <span class="pii-value" data-pii-type="coordinates" data-pii-entity="site:test-site-1">37.7749, -122.4194</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Organization Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Organization Entity <span class="entity-badge">organization</span></h2>
+          <p>Company/utility organization details</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>Organization Details</h4>
+              <div class="test-row">
+                <span class="label">Name</span>
+                <span class="pii-value" data-pii-type="organization-name" data-pii-entity="organization:test-org-1">Acme Energy Corporation</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Domain</span>
+                <span class="pii-value" data-pii-type="organization-domain" data-pii-entity="organization:test-org-1">acme-energy.com</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Logo</span>
+                <img class="logo" data-pii-type="organization-logo" data-pii-entity="organization:test-org-1" src="https://logo.clearbit.com/tesla.com" alt="Logo">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Program Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Program Entity <span class="entity-badge">program</span></h2>
+          <p>Energy program names</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>Program #1</h4>
+              <div class="test-row">
+                <span class="label">Program Name</span>
+                <span class="pii-value" data-pii-type="program-name" data-pii-entity="program:test-program-1">Residential Demand Response</span>
+              </div>
+            </div>
+            <div class="test-card">
+              <h4>Program #2</h4>
+              <div class="test-row">
+                <span class="label">Program Name</span>
+                <span class="pii-value" data-pii-type="program-name" data-pii-entity="program:test-program-2">EV Charging Incentive</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Device Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Device Entity <span class="entity-badge">device</span></h2>
+          <p>Device names and identifiers</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>Device #1</h4>
+              <div class="test-row">
+                <span class="label">Device Name</span>
+                <span class="pii-value" data-pii-type="device-name" data-pii-entity="device:test-device-1">John's Tesla Powerwall</span>
+              </div>
+            </div>
+            <div class="test-card">
+              <h4>Device #2</h4>
+              <div class="test-row">
+                <span class="label">Device Name</span>
+                <span class="pii-value" data-pii-type="device-name" data-pii-entity="device:test-device-2">Main Floor Thermostat</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>User Entity <span class="entity-badge">user</span></h2>
+          <p>Organization members / dashboard users</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>User #1</h4>
+              <div class="test-row">
+                <span class="label">Full Name</span>
+                <span class="pii-value" data-pii-type="full-name" data-pii-entity="user:test-user-1">Victor Quinn</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Email</span>
+                <span class="pii-value" data-pii-type="email" data-pii-entity="user:test-user-1">victor@texturehq.com</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Avatar</span>
+                <img class="avatar" data-pii-type="avatar" data-pii-entity="user:test-user-1" src="https://i.pravatar.cc/48?u=victor" alt="Avatar">
+              </div>
+            </div>
+            <div class="test-card">
+              <h4>User #2</h4>
+              <div class="test-row">
+                <span class="label">Full Name</span>
+                <span class="pii-value" data-pii-type="full-name" data-pii-entity="user:test-user-2">Nicholas Brown</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Email</span>
+                <span class="pii-value" data-pii-type="email" data-pii-entity="user:test-user-2">nicholas@texturehq.com</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invitation Tests -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Invitation Entity <span class="entity-badge">invitation</span></h2>
+          <p>Pending invitations to join organization</p>
+        </div>
+        <div class="section-body">
+          <div class="test-grid">
+            <div class="test-card">
+              <h4>Pending Invitation</h4>
+              <div class="test-row">
+                <span class="label">Invitee Email</span>
+                <span class="pii-value" data-pii-type="email" data-pii-entity="invitation:test-invitation-1">newuser@company.com</span>
+              </div>
+              <div class="test-row">
+                <span class="label">Invited By</span>
+                <span class="pii-value" data-pii-type="full-name" data-pii-entity="invitation:test-invitation-1:inviter">Admin Person</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Content Test -->
+      <div class="section">
+        <div class="section-header">
+          <h2>Dynamic Content Test</h2>
+          <p>Tests MutationObserver - dynamically added elements should be masked automatically</p>
+        </div>
+        <div class="section-body">
+          <button class="btn btn-primary" onclick="addDynamicContent()">Add Dynamic Content</button>
+          <div class="dynamic-area" id="dynamic-container">
+            <p>Dynamic content will appear here when you click the button...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sample Data Tab -->
+    <div id="data" class="tab-content">
+      <div class="data-layout">
+        <nav class="data-nav">
+          <h3>Jump to</h3>
+          <a href="#data-name-buckets" class="active">Name Buckets</a>
+          <a href="#data-anglo">Anglo (45%)</a>
+          <a href="#data-hispanic">Hispanic (25%)</a>
+          <a href="#data-black">Black (15%)</a>
+          <a href="#data-asian">Asian (10%)</a>
+          <a href="#data-neutral">Neutral (5%)</a>
+          <a href="#data-location">Location System</a>
+          <a href="#data-streets">Streets</a>
+          <a href="#data-region-west">West (25%)</a>
+          <a href="#data-region-southwest">Southwest (20%)</a>
+          <a href="#data-region-midwest">Midwest (20%)</a>
+          <a href="#data-region-northeast">Northeast (20%)</a>
+          <a href="#data-region-southeast">Southeast (15%)</a>
+          <a href="#data-orgs">Organizations</a>
+          <a href="#data-org-coop">Co-ops (40%)</a>
+          <a href="#data-org-iou">IOUs (30%)</a>
+          <a href="#data-org-muni">Municipal (15%)</a>
+          <a href="#data-org-der">DER/OEM (15%)</a>
+          <a href="#data-programs">Programs</a>
+          <a href="#data-devices">Devices</a>
+          <a href="#data-avatars">Avatars</a>
+        </nav>
+
+        <div class="data-content">
+          <div id="data-name-buckets" class="data-section">
+            <h3>Bucketed Name Generation</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+              Names are generated using demographic buckets to reflect U.S. population diversity.
+              First name selects a bucket by weight, then 75% of the time the last name comes from the same bucket,
+              25% from a different bucket (reflecting intermarriage, adoption, cultural blending).
+              <strong>First names include gender presentation metadata</strong> (<span class="gender-badge gender-male">male</span> <span class="gender-badge gender-female">female</span> <span class="gender-badge gender-neutral">neutral</span>) for avatar matching.
+            </p>
+            <table class="data-table" id="table-name-buckets-summary">
+              <thead>
+                <tr>
+                  <th>Bucket</th>
+                  <th>Weight</th>
+                  <th>First Names</th>
+                  <th>Last Names</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div id="data-anglo" class="data-section">
+            <h3>Anglo / Western European <span class="count">45%</span></h3>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">First Names <span style="font-weight: normal; color: var(--text-muted);">(with gender presentation)</span></h4>
+            <table class="data-table" id="table-anglo-first"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Last Names</h4>
+            <table class="data-table" id="table-anglo-last"></table>
+          </div>
+
+          <div id="data-hispanic" class="data-section">
+            <h3>Hispanic / Latino <span class="count">25%</span></h3>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">First Names <span style="font-weight: normal; color: var(--text-muted);">(with gender presentation)</span></h4>
+            <table class="data-table" id="table-hispanic-first"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Last Names</h4>
+            <table class="data-table" id="table-hispanic-last"></table>
+          </div>
+
+          <div id="data-black" class="data-section">
+            <h3>Black / African American <span class="count">15%</span></h3>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">First Names <span style="font-weight: normal; color: var(--text-muted);">(with gender presentation)</span></h4>
+            <table class="data-table" id="table-black-first"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Last Names</h4>
+            <table class="data-table" id="table-black-last"></table>
+          </div>
+
+          <div id="data-asian" class="data-section">
+            <h3>Asian American <span class="count">10%</span></h3>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">First Names <span style="font-weight: normal; color: var(--text-muted);">(with gender presentation)</span></h4>
+            <table class="data-table" id="table-asian-first"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Last Names</h4>
+            <table class="data-table" id="table-asian-last"></table>
+          </div>
+
+          <div id="data-neutral" class="data-section">
+            <h3>Neutral / Mixed <span class="count">5%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">
+              Acts as a blending bucket with gender-neutral and cross-cultural names.
+            </p>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">First Names <span style="font-weight: normal; color: var(--text-muted);">(with gender presentation)</span></h4>
+            <table class="data-table" id="table-neutral-first"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Last Names</h4>
+            <table class="data-table" id="table-neutral-last"></table>
+          </div>
+
+          <div id="data-location" class="data-section">
+            <h3>Regional Location Generation</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+              Addresses are generated using regional buckets for realistic city/state pairing.
+              80% of the time city and state come from the same region, 20% cross-region (reflecting real U.S. mobility).
+              ~30% of addresses include unit/apartment numbers.
+            </p>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Region</th>
+                  <th>Weight</th>
+                  <th>States</th>
+                  <th>Cities</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>West / Pacific</td><td>25%</td><td>CA, WA, OR, CO, NV</td><td>20</td></tr>
+                <tr><td>Southwest</td><td>20%</td><td>TX, AZ, NM</td><td>20</td></tr>
+                <tr><td>Midwest</td><td>20%</td><td>IL, OH, MI, IN, MO, MN, WI</td><td>20</td></tr>
+                <tr><td>Northeast</td><td>20%</td><td>NY, NJ, MA, PA, CT</td><td>20</td></tr>
+                <tr><td>Southeast</td><td>15%</td><td>FL, GA, NC, TN, VA, MD</td><td>20</td></tr>
+              </tbody>
+            </table>
+            <h4 style="margin: 1.5rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Address Components</h4>
+            <table class="data-table">
+              <thead>
+                <tr><th>Component</th><th>Generation Rule</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>House Number</td><td>15% 2-digit, 45% 3-digit, 40% 4-digit (realistic distribution)</td></tr>
+                <tr><td>Street</td><td>40 base names × 13 suffixes (St, Ave, Rd, Dr, Ln, Way, Blvd, Ct, Pl, Cir, Pkwy, Ter, Trl)</td></tr>
+                <tr><td>Unit</td><td>30% have unit (Apt 40%, Unit 25%, # 15%, Suite 10%, Floor 10%)</td></tr>
+                <tr><td>ZIP Code</td><td>Loosely correlated with region (e.g., 9xxxx for West)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="data-streets" class="data-section">
+            <h3>Street Bases <span class="count">40</span></h3>
+            <table class="data-table" id="table-street-bases"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Street Suffixes (weighted)</h4>
+            <table class="data-table" id="table-street-suffixes"></table>
+          </div>
+
+          <div id="data-region-west" class="data-section">
+            <h3>West / Pacific <span class="count">25%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">States: CA, WA, OR, CO, NV</p>
+            <table class="data-table" id="table-cities-west"></table>
+          </div>
+
+          <div id="data-region-southwest" class="data-section">
+            <h3>Southwest <span class="count">20%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">States: TX, AZ, NM</p>
+            <table class="data-table" id="table-cities-southwest"></table>
+          </div>
+
+          <div id="data-region-midwest" class="data-section">
+            <h3>Midwest <span class="count">20%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">States: IL, OH, MI, IN, MO, MN, WI</p>
+            <table class="data-table" id="table-cities-midwest"></table>
+          </div>
+
+          <div id="data-region-northeast" class="data-section">
+            <h3>Northeast <span class="count">20%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">States: NY, NJ, MA, PA, CT</p>
+            <table class="data-table" id="table-cities-northeast"></table>
+          </div>
+
+          <div id="data-region-southeast" class="data-section">
+            <h3>Southeast <span class="count">15%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">States: FL, GA, NC, TN, VA, MD</p>
+            <table class="data-table" id="table-cities-southeast"></table>
+          </div>
+
+          <div id="data-orgs" class="data-section">
+            <h3>Bucketed Organization Names</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+              Organization names reflect the real U.S. utility landscape: electric cooperatives (most common),
+              investor-owned utilities, municipal utilities, and modern DER/OEM companies.
+            </p>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Weight</th>
+                  <th>Style</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Electric Co-ops</td><td>40%</td><td>"{Region} Electric Cooperative", "{Region} REC"</td><td>15</td></tr>
+                <tr><td>IOUs / Legacy</td><td>30%</td><td>"{Region} Electric", "{Region} Power"</td><td>15</td></tr>
+                <tr><td>Municipal</td><td>15%</td><td>"{City} Municipal Electric", "{City} Public Utilities"</td><td>15</td></tr>
+                <tr><td>DER / OEM</td><td>15%</td><td>"{Brand} Energy", "{Brand} Grid Technologies"</td><td>15</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="data-org-coop" class="data-section">
+            <h3>Electric Cooperatives <span class="count">40%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">Member-owned, rural-focused. Keywords: "Cooperative", "REC", "Rural Electric"</p>
+            <table class="data-table" id="table-org-coop"></table>
+          </div>
+
+          <div id="data-org-iou" class="data-section">
+            <h3>IOUs / Legacy Utilities <span class="count">30%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">Investor-owned, older/established feel. Keywords: "Electric", "Power", "Energy"</p>
+            <table class="data-table" id="table-org-iou"></table>
+          </div>
+
+          <div id="data-org-muni" class="data-section">
+            <h3>Municipal Utilities <span class="count">15%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">City/town-owned. Keywords: "Municipal", "Public Utilities", "Power & Light"</p>
+            <table class="data-table" id="table-org-muni"></table>
+          </div>
+
+          <div id="data-org-der" class="data-section">
+            <h3>DER / OEM Companies <span class="count">15%</span></h3>
+            <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.875rem;">Modern energy tech. Keywords: "Solutions", "Technologies", "Systems"</p>
+            <table class="data-table" id="table-org-der"></table>
+          </div>
+
+          <div id="data-programs" class="data-section">
+            <h3>Bucketed Program Names</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+              Program names are intentionally "utility boring" - benefit-oriented and slightly bureaucratic,
+              matching real utility program naming conventions.
+            </p>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Weight</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Battery / Storage</td><td>40%</td><td>21</td></tr>
+                <tr><td>EV / Electrification</td><td>30%</td><td>21</td></tr>
+                <tr><td>Demand Response</td><td>15%</td><td>12</td></tr>
+                <tr><td>VPP / Grid Services</td><td>15%</td><td>12</td></tr>
+              </tbody>
+            </table>
+            <h4 style="margin: 1.5rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Battery / Storage (40%)</h4>
+            <table class="data-table" id="table-prog-battery"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">EV / Electrification (30%)</h4>
+            <table class="data-table" id="table-prog-ev"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">Demand Response (15%)</h4>
+            <table class="data-table" id="table-prog-dr"></table>
+            <h4 style="margin: 1rem 0 0.5rem; color: var(--text-heading); font-size: 0.875rem;">VPP / Grid Services (15%)</h4>
+            <table class="data-table" id="table-prog-vpp"></table>
+          </div>
+
+          <div id="data-devices" class="data-section">
+            <h3>Device Names <span class="count">15</span></h3>
+            <table class="data-table" id="table-devices"></table>
+          </div>
+
+          <div id="data-avatars" class="data-section">
+            <h3>AI-Generated Avatars</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+              Avatars are organized by gender presentation (male/female/neutral) and appearance range (light/medium/dark).
+              Each identity is assigned a gender from their first name and an appearance range independently.
+              The avatar bucket is then <code>{gender}_{appearance}</code> (e.g., "female_light", "male_dark").
+            </p>
+            <div id="avatar-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating Controls -->
+  <div class="floating-controls">
+    <button class="btn" onclick="debugOriginals()">Debug to Console</button>
+  </div>
+
+  <!-- Load shared data from source of truth -->
+  <script src="../src/shared/data.js"></script>
+  <script>
+    // Get data from shared module
+    const {
+      NAME_BUCKETS,
+      STREET_BASES,
+      STREET_SUFFIXES,
+      LOCATION_REGIONS,
+      ORG_BUCKETS,
+      PROGRAM_BUCKETS,
+      DEVICE_NAMES,
+      AVATAR_MANIFEST,
+    } = window.CurtainData;
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Nav link highlighting
+    document.querySelectorAll('.data-nav a').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelectorAll('.data-nav a').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    // Bucket display names for summary table
+    const BUCKET_DISPLAY_NAMES = {
+      anglo: 'Anglo / Western European',
+      hispanic: 'Hispanic / Latino',
+      black: 'Black / African American',
+      asian: 'Asian American',
+      neutral: 'Neutral / Mixed',
+    };
+
+    // Render name buckets summary table dynamically
+    const summaryTable = document.getElementById('table-name-buckets-summary');
+    if (summaryTable) {
+      const tbody = summaryTable.querySelector('tbody');
+      let html = '';
+      for (const [key, bucket] of Object.entries(NAME_BUCKETS)) {
+        const displayName = BUCKET_DISPLAY_NAMES[key] || key;
+        const weight = (bucket.weight * 100).toFixed(0) + '%';
+        const firstCount = bucket.firstNames.length;
+        const lastCount = bucket.lastNames.length;
+        html += `<tr><td>${displayName}</td><td>${weight}</td><td>${firstCount}</td><td>${lastCount}</td></tr>`;
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Render data tables
+    function renderTable(tableId, data, columns = 5) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      const rows = Math.ceil(data.length / columns);
+      let html = '<thead><tr>';
+      for (let c = 0; c < columns; c++) {
+        html += '<th class="index">#</th><th>Value</th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      for (let r = 0; r < rows; r++) {
+        html += '<tr>';
+        for (let c = 0; c < columns; c++) {
+          const idx = r + (c * rows);
+          if (idx < data.length) {
+            html += `<td class="index">${idx + 1}</td><td>${data[idx]}</td>`;
+          } else {
+            html += '<td class="index"></td><td></td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    // Render first names table with gender badges
+    function renderFirstNamesTable(tableId, data, columns = 4) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      const rows = Math.ceil(data.length / columns);
+      let html = '<thead><tr>';
+      for (let c = 0; c < columns; c++) {
+        html += '<th class="index">#</th><th>Name</th><th>Gender</th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      for (let r = 0; r < rows; r++) {
+        html += '<tr>';
+        for (let c = 0; c < columns; c++) {
+          const idx = r + (c * rows);
+          if (idx < data.length) {
+            const item = data[idx];
+            const name = item.name;
+            const gender = item.gender;
+            const badgeClass = `gender-badge gender-${gender}`;
+            html += `<td class="index">${idx + 1}</td><td>${name}</td><td><span class="${badgeClass}">${gender}</span></td>`;
+          } else {
+            html += '<td class="index"></td><td></td><td></td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    // Render bucketed name tables (first names now include gender metadata)
+    renderFirstNamesTable('table-anglo-first', NAME_BUCKETS.anglo.firstNames, 3);
+    renderTable('table-anglo-last', NAME_BUCKETS.anglo.lastNames, 4);
+    renderFirstNamesTable('table-hispanic-first', NAME_BUCKETS.hispanic.firstNames, 3);
+    renderTable('table-hispanic-last', NAME_BUCKETS.hispanic.lastNames, 4);
+    renderFirstNamesTable('table-black-first', NAME_BUCKETS.black.firstNames, 3);
+    renderTable('table-black-last', NAME_BUCKETS.black.lastNames, 4);
+    renderFirstNamesTable('table-asian-first', NAME_BUCKETS.asian.firstNames, 3);
+    renderTable('table-asian-last', NAME_BUCKETS.asian.lastNames, 4);
+    renderFirstNamesTable('table-neutral-first', NAME_BUCKETS.neutral.firstNames, 3);
+    renderTable('table-neutral-last', NAME_BUCKETS.neutral.lastNames, 4);
+
+    // Render street tables
+    renderTable('table-street-bases', STREET_BASES, 5);
+
+    // Render street suffixes as a simple table
+    const suffixTable = document.getElementById('table-street-suffixes');
+    if (suffixTable) {
+      let html = '<thead><tr><th>Suffix</th><th>Weight</th></tr></thead><tbody>';
+      STREET_SUFFIXES.forEach(s => {
+        const weightPercent = (s.weight * 100).toFixed(0) + '%';
+        html += `<tr><td>${s.suffix}</td><td>${weightPercent}</td></tr>`;
+      });
+      html += '</tbody>';
+      suffixTable.innerHTML = html;
+    }
+
+    // Render regional city tables (access .cities from region objects)
+    renderTable('table-cities-west', LOCATION_REGIONS.west.cities, 4);
+    renderTable('table-cities-southwest', LOCATION_REGIONS.southwest.cities, 4);
+    renderTable('table-cities-midwest', LOCATION_REGIONS.midwest.cities, 4);
+    renderTable('table-cities-northeast', LOCATION_REGIONS.northeast.cities, 4);
+    renderTable('table-cities-southeast', LOCATION_REGIONS.southeast.cities, 4);
+
+    // Render organization bucket tables (access .names from bucket objects)
+    renderTable('table-org-coop', ORG_BUCKETS.coop.names, 3);
+    renderTable('table-org-iou', ORG_BUCKETS.iou.names, 3);
+    renderTable('table-org-muni', ORG_BUCKETS.municipal.names, 3);
+    renderTable('table-org-der', ORG_BUCKETS.der.names, 3);
+
+    // Render program bucket tables (access .names from bucket objects)
+    renderTable('table-prog-battery', PROGRAM_BUCKETS.battery.names, 3);
+    renderTable('table-prog-ev', PROGRAM_BUCKETS.ev.names, 3);
+    renderTable('table-prog-dr', PROGRAM_BUCKETS.demandResponse.names, 3);
+    renderTable('table-prog-vpp', PROGRAM_BUCKETS.vpp.names, 3);
+
+    // Render device table
+    renderTable('table-devices', DEVICE_NAMES, 3);
+
+    // Render avatar grid
+    const avatarGrid = document.getElementById('avatar-grid');
+    if (avatarGrid && AVATAR_MANIFEST?.buckets) {
+      const bucketOrder = [
+        'female_light', 'female_medium', 'female_dark',
+        'male_light', 'male_medium', 'male_dark',
+        'neutral_light', 'neutral_medium', 'neutral_dark',
+      ];
+
+      const bucketLabels = {
+        female_light: 'Female / Light',
+        female_medium: 'Female / Medium',
+        female_dark: 'Female / Dark',
+        male_light: 'Male / Light',
+        male_medium: 'Male / Medium',
+        male_dark: 'Male / Dark',
+        neutral_light: 'Neutral / Light',
+        neutral_medium: 'Neutral / Medium',
+        neutral_dark: 'Neutral / Dark',
+      };
+
+      let html = '';
+      for (const bucket of bucketOrder) {
+        const files = AVATAR_MANIFEST.buckets[bucket] || [];
+        const label = bucketLabels[bucket] || bucket;
+
+        html += `
+          <div style="background: var(--bg-muted); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--text-heading); margin-bottom: 0.75rem;">
+              ${label} <span style="font-weight: normal; color: var(--text-muted);">(${files.length})</span>
+            </h4>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        `;
+
+        for (const file of files) {
+          const src = `../src/shared/avatars/v1/${bucket}/${file}`;
+          html += `
+            <img src="${src}" alt="${bucket}"
+                 style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border); object-fit: cover;"
+                 onerror="this.style.display='none'">
+          `;
+        }
+
+        if (files.length === 0) {
+          html += `<span style="color: var(--text-muted); font-size: 0.875rem;">No avatars</span>`;
+        }
+
+        html += `
+            </div>
+          </div>
+        `;
+      }
+      avatarGrid.innerHTML = html;
+    }
+
+    // Dynamic content test
+    let dynamicCounter = 0;
+    function addDynamicContent() {
+      dynamicCounter++;
+      const container = document.getElementById('dynamic-container');
+
+      if (dynamicCounter === 1) {
+        container.innerHTML = '';
+      }
+
+      const div = document.createElement('div');
+      div.className = 'test-card';
+      div.style.marginTop = '0.5rem';
+      div.innerHTML = `
+        <h4>Dynamic Contact #${dynamicCounter}</h4>
+        <div class="test-row">
+          <span class="label">Name</span>
+          <span class="pii-value" data-pii-type="full-name" data-pii-entity="contact:dynamic-${dynamicCounter}">Dynamic Person ${dynamicCounter}</span>
+        </div>
+        <div class="test-row">
+          <span class="label">Email</span>
+          <span class="pii-value" data-pii-type="email" data-pii-entity="contact:dynamic-${dynamicCounter}">dynamic${dynamicCounter}@test.com</span>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    // Debug helper
+    function debugOriginals() {
+      const elements = document.querySelectorAll('[data-pii-type]');
+      console.group('Curtain Debug - Original Values');
+      elements.forEach((el, i) => {
+        const type = el.getAttribute('data-pii-type');
+        const entity = el.getAttribute('data-pii-entity');
+        const original = el.getAttribute('data-pii-original');
+        const masked = el.getAttribute('data-pii-masked');
+        const current = el.tagName === 'IMG' ? el.src : el.textContent;
+        console.log(`[${i}] ${type} (${entity}):`, { current, original, masked });
+      });
+      console.groupEnd();
+      alert('Check browser console (F12) for debug output');
+    }
+  </script>
+</body>
+</html>

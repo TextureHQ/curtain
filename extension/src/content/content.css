@@ -1,0 +1,20 @@
+/**
+ * Curtain - Content Script Styles
+ * Temporarily hides PII elements until they're processed to prevent flash of real content
+ */
+
+/* When masking is enabled, hide unprocessed PII elements */
+html.curtain-enabled [data-pii-type][data-pii-entity]:not([data-pii-masked]) {
+  visibility: hidden;
+}
+
+/* Once processed (masked or explicitly unmasked), show the element */
+html.curtain-enabled [data-pii-type][data-pii-entity][data-pii-masked="true"],
+html.curtain-enabled [data-pii-type][data-pii-entity][data-pii-masked="false"] {
+  visibility: visible;
+}
+
+/* When masking is disabled, always show */
+html:not(.curtain-enabled) [data-pii-type][data-pii-entity] {
+  visibility: visible;
+}
