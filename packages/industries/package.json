@@ -19,10 +19,12 @@
     "./energy": {
       "types": "./dist/energy/index.d.ts",
       "import": "./dist/energy/index.js"
-    }
+    },
+    "./assets/*": "./assets/*"
   },
   "files": [
     "dist",
+    "assets",
     "README.md"
   ],
   "scripts": {
