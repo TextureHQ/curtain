@@ -1,0 +1,7 @@
+# Assets copied at build time from @texturehq/curtain-industries.
+# Source of truth is in packages/industries/assets/.
+# Regenerate with: yarn --cwd extension build:data
+src/shared/avatars/
+src/shared/logos/
+
+src/shared/data.js
