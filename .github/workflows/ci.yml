@@ -17,9 +17,9 @@ jobs:
         run: corepack enable
       - name: Install
         run: yarn install --immutable
-      - name: Typecheck
-        run: yarn typecheck
       - name: Build
         run: yarn build
+      - name: Typecheck
+        run: yarn typecheck
       - name: Test
         run: yarn test
