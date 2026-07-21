@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build extension
+        run: yarn build
+      - name: Set release metadata
+        id: release
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="v$(node -p "require('./extension/package.json').version")"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "asset=curtain-extension-$tag.zip" >> "$GITHUB_OUTPUT"
+      - name: Package load-unpacked extension
+        run: |
+          mkdir -p dist/curtain-extension
+          rsync -a --delete \
+            --exclude='.gitignore' \
+            --exclude='docs/' \
+            --exclude='package.json' \
+            --exclude='scripts/' \
+            --exclude='test/' \
+            --exclude='*.sh' \
+            --exclude='*.ts' \
+            extension/ dist/curtain-extension/
+          cd dist
+          zip -r "${{ steps.release.outputs.asset }}" curtain-extension
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Curtain ${{ steps.release.outputs.tag }}
+          body: |
+            Download, unzip, and load the `curtain-extension` folder in Chrome.
+            See the [README](https://github.com/TextureHQ/curtain#install) for installation instructions.
+          files: dist/${{ steps.release.outputs.asset }}

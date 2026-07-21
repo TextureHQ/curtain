@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Curtain",
-  "description": "Internal tool for Texture employees to mask PII in the dashboard for demos and marketing assets",
-  "version": "1.1.0",
+  "description": "Masks PII in your app for safe demos, screenshots, and screen shares.",
+  "version": "1.2.0",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://*.texturehq.com/*",
