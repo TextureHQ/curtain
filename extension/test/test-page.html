@@ -1110,11 +1110,19 @@
     renderTable('table-cities-northeast', LOCATION_REGIONS.northeast.cities, 4);
     renderTable('table-cities-southeast', LOCATION_REGIONS.southeast.cities, 4);
 
-    // Render organization bucket tables (access .names from bucket objects)
-    renderTable('table-org-coop', ORG_BUCKETS.coop.names, 3);
-    renderTable('table-org-iou', ORG_BUCKETS.iou.names, 3);
-    renderTable('table-org-muni', ORG_BUCKETS.municipal.names, 3);
-    renderTable('table-org-der', ORG_BUCKETS.der.names, 3);
+    // Build org lookup by type for the data tab
+    const orgByType = {};
+    if (ORGANIZATIONS) {
+      ORGANIZATIONS.forEach(org => {
+        if (!orgByType[org.type]) orgByType[org.type] = [];
+        orgByType[org.type].push(org);
+      });
+    }
+
+    renderTable('table-org-coop', (orgByType.coop || []).map(o => o.name), 3);
+    renderTable('table-org-iou', (orgByType.iou || []).map(o => o.name), 3);
+    renderTable('table-org-muni', (orgByType.municipal || []).map(o => o.name), 3);
+    renderTable('table-org-der', (orgByType.der || []).map(o => o.name), 3);
 
     // Render program bucket tables (access .names from bucket objects)
     renderTable('table-prog-battery', PROGRAM_BUCKETS.battery.names, 3);
