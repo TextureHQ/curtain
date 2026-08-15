@@ -165,6 +165,15 @@ test('every registry pack has a valid data.json', () => {
     assert.ok(fs.existsSync(dataPath), `pack "${name}" data.json missing at ${dataPath}`);
     const data = loadJson(dataPath);
     assert.equal(data.name, name, `pack "${name}" data.name must match`);
+    // `masks` declares which entity types the pack provides data for and
+    // which data-pii-entity / data-pii-type attributes it expects in the DOM.
+    assert.ok(data.masks && typeof data.masks === 'object', `pack "${name}" must declare a masks map`);
+    for (const entityType of ['organization', 'program', 'device']) {
+      if (data.masks[entityType]) {
+        assert.equal(typeof data.masks[entityType].count, 'number',
+          `pack "${name}" masks.${entityType}.count must be a number`);
+      }
+    }
     // IndustryConfig shape
     assert.ok(Array.isArray(data.organizations), `pack "${name}" organizations must be an array`);
     for (const org of data.organizations) {

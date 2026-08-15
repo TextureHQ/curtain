@@ -1,5 +1,18 @@
 {
   "name": "medical",
+  "masks": {
+    "organization": {
+      "count": 10,
+      "types": ["hospital", "clinic", "practice"]
+    },
+    "program": {
+      "count": 32,
+      "buckets": ["care", "screening", "specialty"]
+    },
+    "device": {
+      "count": 15
+    }
+  },
   "organizations": [
     { "id": "med_001", "name": "Riverside Medical Center", "type": "hospital" },
     { "id": "med_002", "name": "Crossroads Community Health", "type": "clinic" },

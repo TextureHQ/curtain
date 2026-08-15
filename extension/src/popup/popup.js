@@ -18,36 +18,16 @@ const packRefreshBtn = document.getElementById('pack-refresh-btn');
 let settings = null;
 let availablePacks = [];
 
-// Demo organization options - mirrors ORG_BUCKETS from content.js
+// Demo organization options — mirrors the neutral default ORGANIZATIONS in
+// build-data-bundle.mjs. NOTE: this should eventually populate dynamically
+// from the core pool + enabled packs; the static list is a stopgap until the
+// popup can read the merged organization list from the background worker.
 const DEMO_ORG_OPTIONS = [
-  // Co-ops (largest category)
-  'Pioneer Electric Cooperative',
-  'Valley Rural Electric',
-  'Northern Plains REC',
-  'Ozark Electric Cooperative',
-  'Blue Ridge Electric Membership Corp',
-  'Heartland Electric Cooperative',
-  'Midwest Energy Cooperative',
-  'Tri-County Electric Cooperative',
-  // IOUs
-  'Northern Lights Electric',
-  'Valley Stream Power',
-  'Summit Power Company',
-  'Coastal Electric',
-  'Evergreen Utilities',
-  'Prairie State Energy',
-  'Golden State Electric',
-  // Municipals
-  'Springfield Municipal Electric',
-  'Riverside Public Utilities',
-  'Burlington Electric Department',
-  'Madison Power & Light',
-  // DER/OEM
-  'Redwood Energy Group',
-  'Pacific Grid Solutions',
-  'Blue Sky Energy',
-  'Horizon Energy Systems',
-  'NextWave Power',
+  'Acme Corporation',
+  'Globex Industries',
+  'Initech Solutions',
+  'Northwind Traders',
+  'Umbrella Holdings',
 ];
 
 // Initialize popup
