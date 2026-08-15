@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "packs": {
+    "medical": {
+      "name": "medical",
+      "displayName": "Medical / Healthcare",
+      "description": "Fictional hospitals, clinics, and healthcare programs for masking medical SaaS demos.",
+      "version": "1.0.0",
+      "dataPath": "packs/medical/data.json",
+      "hasLogos": false
+    }
+  }
+}

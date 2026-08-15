@@ -12,8 +12,11 @@ const statusText = headerStatus.querySelector('.status-text');
 const domainListEl = document.getElementById('domain-list');
 const domainInputEl = document.getElementById('domain-input');
 const domainAddBtn = document.getElementById('domain-add-btn');
+const packListEl = document.getElementById('pack-list');
+const packRefreshBtn = document.getElementById('pack-refresh-btn');
 
 let settings = null;
+let availablePacks = [];
 
 // Demo organization options - mirrors ORG_BUCKETS from content.js
 const DEMO_ORG_OPTIONS = [
@@ -67,6 +70,7 @@ async function initialize() {
     }
     settings = response.settings;
     updateUI();
+    await loadPacks();
   } catch (error) {
     console.error('Curtain: Failed to initialize popup:', error);
     statusText.textContent = 'Extension error';
@@ -255,6 +259,95 @@ async function saveSettings() {
     console.error('Curtain: Failed to save settings:', error);
   }
 }
+
+// ---------- Industry Packs (runtime pack loading) ----------
+
+// Load the pack registry + cached state from the background worker.
+async function loadPacks() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'FETCH_PACK_REGISTRY' });
+    if (!response) return;
+    availablePacks = response.availablePacks || [];
+    renderPacks();
+  } catch (error) {
+    console.error('Curtain: Failed to load packs:', error);
+  }
+}
+
+// Render the pack list with toggle switches.
+function renderPacks() {
+  packListEl.innerHTML = '';
+
+  if (!availablePacks.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hint';
+    empty.textContent = 'No packs available. Check your connection and refresh.';
+    packListEl.appendChild(empty);
+    return;
+  }
+
+  for (const pack of availablePacks) {
+    const row = document.createElement('div');
+    row.className = 'pack-row';
+
+    const info = document.createElement('div');
+    info.className = 'pack-info';
+
+    const label = document.createElement('span');
+    label.className = 'pack-name';
+    label.textContent = pack.displayName;
+
+    const desc = document.createElement('span');
+    desc.className = 'pack-desc';
+    desc.textContent = pack.description;
+
+    info.appendChild(label);
+    info.appendChild(desc);
+
+    const toggleLabel = document.createElement('label');
+    toggleLabel.className = 'switch';
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = !!pack.enabled;
+    toggle.disabled = !pack.cached && !pack.enabled;
+    toggle.addEventListener('change', async () => {
+      toggle.disabled = true;
+      try {
+        await chrome.runtime.sendMessage({
+          type: 'TOGGLE_PACK',
+          packName: pack.name,
+          enabled: toggle.checked,
+        });
+        // Reload the list to reflect updated enabled/cached state.
+        await loadPacks();
+      } catch (error) {
+        console.error('Curtain: Failed to toggle pack:', error);
+        toggle.checked = !toggle.checked;
+        toggle.disabled = false;
+      }
+    });
+    const slider = document.createElement('span');
+    slider.className = 'slider';
+    toggleLabel.appendChild(toggle);
+    toggleLabel.appendChild(slider);
+
+    row.appendChild(info);
+    row.appendChild(toggleLabel);
+    packListEl.appendChild(row);
+  }
+}
+
+// Refresh the pack list (force re-fetch registry).
+packRefreshBtn.addEventListener('click', async () => {
+  packRefreshBtn.disabled = true;
+  packRefreshBtn.textContent = 'Refreshing...';
+  try {
+    await loadPacks();
+  } finally {
+    packRefreshBtn.disabled = false;
+    packRefreshBtn.textContent = 'Refresh Pack List';
+  }
+});
 
 // Initialize on load
 initialize();

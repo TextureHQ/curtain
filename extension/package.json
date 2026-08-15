@@ -1,7 +1,7 @@
 {
   "name": "@texturehq/curtain-extension",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Curtain — Chrome MV3 extension that masks PII in B2B SaaS UIs for safe demos. Powered by @texturehq/curtain-core.",
   "license": "MIT",
   "type": "module",
@@ -9,7 +9,7 @@
     "build:data": "node scripts/build-data-bundle.mjs",
     "build:deps": "yarn workspaces foreach -Rpt --from @texturehq/curtain-extension --exclude @texturehq/curtain-extension run build",
     "build": "yarn build:deps && yarn build:data",
-    "test": "node --test test/data-bundle.test.mjs"
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@texturehq/curtain-core": "workspace:*",
