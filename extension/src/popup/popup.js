@@ -267,6 +267,11 @@ function renderPacks() {
   }
 
   for (const pack of availablePacks) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pack-card';
+    wrapper.dataset.pack = pack.name;
+
+    // ── Top row: name, description, master toggle ──
     const row = document.createElement('div');
     row.className = 'pack-row';
 
@@ -298,7 +303,6 @@ function renderPacks() {
           packName: pack.name,
           enabled: toggle.checked,
         });
-        // Reload the list to reflect updated enabled/cached state.
         await loadPacks();
       } catch (error) {
         console.error('Curtain: Failed to toggle pack:', error);
@@ -313,8 +317,136 @@ function renderPacks() {
 
     row.appendChild(info);
     row.appendChild(toggleLabel);
-    packListEl.appendChild(row);
+    wrapper.appendChild(row);
+
+    // ── Sub-toggles: type/bucket filters (only when enabled + masks present) ──
+    if (pack.enabled && pack.masks) {
+      const filters = pack.filters || {};
+
+      // Organization type checkboxes
+      if (pack.masks.organization?.types?.length) {
+        const orgRow = document.createElement('div');
+        orgRow.className = 'pack-filter-row';
+        const orgLabel = document.createElement('span');
+        orgLabel.className = 'pack-filter-label';
+        orgLabel.textContent = 'Orgs:';
+        orgLabel.style.marginRight = '4px';
+        orgRow.appendChild(orgLabel);
+
+        const orgCbs = {};
+        for (const type of pack.masks.organization.types) {
+          const cb = createFilterChip(pack, 'organization', type,
+            filters.organization?.[type] !== false);
+          orgRow.appendChild(cb);
+          orgCbs[type] = cb;
+        }
+        wrapper.appendChild(orgRow);
+      }
+
+      // Program bucket checkboxes
+      if (pack.masks.program?.buckets?.length) {
+        const progRow = document.createElement('div');
+        progRow.className = 'pack-filter-row';
+        const progLabel = document.createElement('span');
+        progLabel.className = 'pack-filter-label';
+        progLabel.textContent = 'Progs:';
+        progLabel.style.marginRight = '4px';
+        progRow.appendChild(progLabel);
+
+        for (const bucket of pack.masks.program.buckets) {
+          const cb = createFilterChip(pack, 'program', bucket,
+            filters.program?.[bucket] !== false);
+          progRow.appendChild(cb);
+        }
+        wrapper.appendChild(progRow);
+      }
+
+      // Device toggle
+      if (pack.masks.device != null) {
+        const devRow = document.createElement('div');
+        devRow.className = 'pack-filter-row';
+        const devCb = createFilterChip(pack, 'device', null,
+          filters.device !== false);
+        devCb.querySelector('.filter-label-text').textContent =
+          `${pack.masks.device.count} devices`;
+        devRow.appendChild(devCb);
+        wrapper.appendChild(devRow);
+      }
+    }
+
+    packListEl.appendChild(wrapper);
   }
+}
+
+/**
+ * Create a small checkbox chip for a type/bucket filter.
+ * Clicking it fires SET_PACK_FILTER to persist the change.
+ */
+function createFilterChip(pack, category, key, checked) {
+  const label = document.createElement('label');
+  label.className = 'filter-chip';
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = checked;
+  cb.addEventListener('change', async () => {
+    cb.disabled = true;
+    // Build updated filters from current DOM state for this pack
+    const wrapper = packListEl.querySelector(`[data-pack="${pack.name}"]`);
+    const newFilters = buildFiltersFromDOM(wrapper, pack);
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'SET_PACK_FILTER',
+        packName: pack.name,
+        filters: newFilters,
+      });
+      await loadPacks();
+    } catch (err) {
+      console.error('Curtain: filter update failed:', err);
+      cb.checked = !cb.checked;
+      cb.disabled = false;
+    }
+  });
+  const span = document.createElement('span');
+  span.className = `filter-label-text ${checked ? 'active' : ''}`;
+  span.textContent = key || '';
+  // Update style when checked state changes
+  cb.addEventListener('change', () => {
+    span.className = `filter-label-text ${cb.checked ? 'active' : ''}`;
+  });
+  label.appendChild(cb);
+  label.appendChild(span);
+  return label;
+}
+
+/**
+ * Walk the DOM sub-toggles for a pack and reconstruct the filters object.
+ */
+function buildFiltersFromDOM(wrapper, pack) {
+  const filters = {};
+  const rows = wrapper.querySelectorAll('.pack-filter-row');
+  for (const row of rows) {
+    const chips = row.querySelectorAll('.filter-chip input');
+    const labelEl = row.querySelector('.pack-filter-label');
+    const heading = labelEl?.textContent?.toLowerCase() || '';
+
+    if (heading.startsWith('orgs')) {
+      filters.organization = {};
+      for (const chip of chips) {
+        const name = chip.nextElementSibling?.textContent;
+        if (name) filters.organization[name] = chip.checked;
+      }
+    } else if (heading.startsWith('progs')) {
+      filters.program = {};
+      for (const chip of chips) {
+        const name = chip.nextElementSibling?.textContent;
+        if (name) filters.program[name] = chip.checked;
+      }
+    } else {
+      // Device row — single checkbox
+      filters.device = chips[0]?.checked ?? true;
+    }
+  }
+  return filters;
 }
 
 // Refresh the pack list (force re-fetch registry).

@@ -62,6 +62,7 @@ async function downloadPackData(packName) {
 
 /**
  * Merge downloaded pack data into the packs state and persist.
+ * Initializes default all-on filters for every type/bucket the pack declares.
  */
 async function enablePack(packName) {
   const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
@@ -73,7 +74,19 @@ async function enablePack(packName) {
   const data = await downloadPackData(packName);
   if (!data) return;
 
-  packs[packName] = { enabled: true, data };
+  // Build default all-on filters from the pack's `masks` metadata.
+  const filters = {};
+  if (data.masks?.organization?.types) {
+    filters.organization = Object.fromEntries(data.masks.organization.types.map((t) => [t, true]));
+  }
+  if (data.masks?.program?.buckets) {
+    filters.program = Object.fromEntries(data.masks.program.buckets.map((b) => [b, true]));
+  }
+  if (data.masks?.device != null) {
+    filters.device = true;
+  }
+
+  packs[packName] = { enabled: true, data, filters };
   await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: { ...stored, packs } });
 }
 
@@ -101,7 +114,7 @@ async function getEnabledPackDataList() {
 
   const enabled = Object.entries(stored.packs)
     .filter(([_, p]) => p.enabled && p.data)
-    .map(([name, p]) => ({ name, data: p.data }));
+    .map(([name, p]) => ({ name, data: p.data, filters: p.filters || null }));
 
   return enabled.length > 0 ? enabled : null;
 }
@@ -122,6 +135,8 @@ async function getPackState() {
     version: meta.version || '0.0.0',
     enabled: !!packs[name]?.enabled,
     cached: !!packs[name]?.data,
+    filters: packs[name]?.filters || null,
+    masks: (packs[name]?.data?.masks) ? { ...packs[name].data.masks } : null,
   })) : [];
 
   return { registryVersion: registry?.version ?? null, availablePacks };
@@ -412,6 +427,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await enablePack(packName);
       } else {
         await disablePack(packName);
+      }
+      const packDataList = await getEnabledPackDataList();
+      const packsState = await getPackState();
+      sendResponse({ success: true, ...packsState, packDataList });
+    })();
+    return true;
+  }
+
+  if (message.type === 'SET_PACK_FILTER') {
+    const { packName, filters } = message;
+    (async () => {
+      const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+      const packs = stored.packs || {};
+      if (packs[packName]?.data) {
+        packs[packName] = { ...packs[packName], filters };
+        await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: { ...stored, packs } });
       }
       const packDataList = await getEnabledPackDataList();
       const packsState = await getPackState();

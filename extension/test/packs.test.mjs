@@ -146,6 +146,76 @@ test('mergePackData merges multiple packs', () => {
   assert.equal(out.organizations.length, 2, 'orgs from both packs');
 });
 
+test('mergePackData filters organizations by type', () => {
+  const { mergePackData } = loadCurtainPackMerge();
+  const core = { organizations: [], programs: {}, devices: [] };
+  const pack = {
+    name: 'energy',
+    data: {
+      organizations: [
+        { id: 'org_1', name: 'Co-op A', type: 'coop' },
+        { id: 'org_2', name: 'IOU B', type: 'iou' },
+        { id: 'org_3', name: 'Co-op C', type: 'coop' },
+      ],
+    },
+    filters: { organization: { coop: true, iou: false } },
+  };
+  const out = mergePackData(core, [pack]);
+  assert.equal(out.organizations.length, 2, 'only coop orgs included');
+  assert.equal(out.organizations[0].type, 'coop');
+  assert.equal(out.organizations[1].type, 'coop');
+});
+
+test('mergePackData filters programs by bucket key', () => {
+  const { mergePackData } = loadCurtainPackMerge();
+  const core = { organizations: [], programs: {}, devices: [] };
+  const pack = {
+    name: 'medical',
+    data: {
+      programs: {
+        care: { weight: 0.5, names: ['Care Program'] },
+        screening: { weight: 0.5, names: ['Screening'] },
+      },
+    },
+    filters: { program: { care: true, screening: false } },
+  };
+  const out = mergePackData(core, [pack]);
+  assert.equal(Object.keys(out.programs).length, 1, 'only care bucket included');
+  assert.ok(out.programs.care, 'care bucket present');
+  assert.equal(out.programs.screening, undefined, 'screening bucket excluded');
+});
+
+test('mergePackData filters devices when device flag is false', () => {
+  const { mergePackData } = loadCurtainPackMerge();
+  const core = { organizations: [], programs: {}, devices: ['Core Device'] };
+  const pack = {
+    name: 'medical',
+    data: { devices: ['Glucose Meter', 'CPAP Machine'] },
+    filters: { device: false },
+  };
+  const out = mergePackData(core, [pack]);
+  assert.deepEqual(out.devices, ['Core Device'], 'pack devices excluded when device filter is false');
+});
+
+test('mergePackData includes all when filters is null (backward compat)', () => {
+  const { mergePackData } = loadCurtainPackMerge();
+  const core = { organizations: [], programs: {}, devices: [] };
+  const pack = {
+    name: 'energy',
+    data: {
+      organizations: [
+        { id: 'org_1', name: 'Co-op A', type: 'coop' },
+        { id: 'org_2', name: 'IOU B', type: 'iou' },
+      ],
+      devices: ['Home Battery'],
+    },
+    // No filters — backward-compatible: include everything
+  };
+  const out = mergePackData(core, [pack]);
+  assert.equal(out.organizations.length, 2);
+  assert.equal(out.devices.length, 1);
+});
+
 // --- registry + data.json integrity ----------------------------------------
 
 test('registry.json is well-formed', () => {
