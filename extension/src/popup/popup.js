@@ -12,39 +12,22 @@ const statusText = headerStatus.querySelector('.status-text');
 const domainListEl = document.getElementById('domain-list');
 const domainInputEl = document.getElementById('domain-input');
 const domainAddBtn = document.getElementById('domain-add-btn');
+const packListEl = document.getElementById('pack-list');
+const packRefreshBtn = document.getElementById('pack-refresh-btn');
 
 let settings = null;
+let availablePacks = [];
 
-// Demo organization options - mirrors ORG_BUCKETS from content.js
+// Demo organization options — mirrors the neutral default ORGANIZATIONS in
+// build-data-bundle.mjs. NOTE: this should eventually populate dynamically
+// from the core pool + enabled packs; the static list is a stopgap until the
+// popup can read the merged organization list from the background worker.
 const DEMO_ORG_OPTIONS = [
-  // Co-ops (largest category)
-  'Pioneer Electric Cooperative',
-  'Valley Rural Electric',
-  'Northern Plains REC',
-  'Ozark Electric Cooperative',
-  'Blue Ridge Electric Membership Corp',
-  'Heartland Electric Cooperative',
-  'Midwest Energy Cooperative',
-  'Tri-County Electric Cooperative',
-  // IOUs
-  'Northern Lights Electric',
-  'Valley Stream Power',
-  'Summit Power Company',
-  'Coastal Electric',
-  'Evergreen Utilities',
-  'Prairie State Energy',
-  'Golden State Electric',
-  // Municipals
-  'Springfield Municipal Electric',
-  'Riverside Public Utilities',
-  'Burlington Electric Department',
-  'Madison Power & Light',
-  // DER/OEM
-  'Redwood Energy Group',
-  'Pacific Grid Solutions',
-  'Blue Sky Energy',
-  'Horizon Energy Systems',
-  'NextWave Power',
+  'Acme Corporation',
+  'Globex Industries',
+  'Initech Solutions',
+  'Northwind Traders',
+  'Umbrella Holdings',
 ];
 
 // Initialize popup
@@ -67,6 +50,7 @@ async function initialize() {
     }
     settings = response.settings;
     updateUI();
+    await loadPacks();
   } catch (error) {
     console.error('Curtain: Failed to initialize popup:', error);
     statusText.textContent = 'Extension error';
@@ -255,6 +239,227 @@ async function saveSettings() {
     console.error('Curtain: Failed to save settings:', error);
   }
 }
+
+// ---------- Industry Packs (runtime pack loading) ----------
+
+// Load the pack registry + cached state from the background worker.
+async function loadPacks() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'FETCH_PACK_REGISTRY' });
+    if (!response) return;
+    availablePacks = response.availablePacks || [];
+    renderPacks();
+  } catch (error) {
+    console.error('Curtain: Failed to load packs:', error);
+  }
+}
+
+// Render the pack list with toggle switches.
+function renderPacks() {
+  packListEl.innerHTML = '';
+
+  if (!availablePacks.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hint';
+    empty.textContent = 'No packs available. Check your connection and refresh.';
+    packListEl.appendChild(empty);
+    return;
+  }
+
+  for (const pack of availablePacks) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pack-card';
+    wrapper.dataset.pack = pack.name;
+
+    // ── Top row: name, description, master toggle ──
+    const row = document.createElement('div');
+    row.className = 'pack-row';
+
+    const info = document.createElement('div');
+    info.className = 'pack-info';
+
+    const label = document.createElement('span');
+    label.className = 'pack-name';
+    label.textContent = pack.displayName;
+
+    const desc = document.createElement('span');
+    desc.className = 'pack-desc';
+    desc.textContent = pack.description;
+
+    info.appendChild(label);
+    info.appendChild(desc);
+
+    const toggleLabel = document.createElement('label');
+    toggleLabel.className = 'switch';
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = !!pack.enabled;
+    toggle.disabled = !pack.cached && !pack.enabled;
+    toggle.addEventListener('change', async () => {
+      toggle.disabled = true;
+      try {
+        await chrome.runtime.sendMessage({
+          type: 'TOGGLE_PACK',
+          packName: pack.name,
+          enabled: toggle.checked,
+        });
+        await loadPacks();
+      } catch (error) {
+        console.error('Curtain: Failed to toggle pack:', error);
+        toggle.checked = !toggle.checked;
+        toggle.disabled = false;
+      }
+    });
+    const slider = document.createElement('span');
+    slider.className = 'slider';
+    toggleLabel.appendChild(toggle);
+    toggleLabel.appendChild(slider);
+
+    row.appendChild(info);
+    row.appendChild(toggleLabel);
+    wrapper.appendChild(row);
+
+    // ── Sub-toggles: type/bucket filters (only when enabled + masks present) ──
+    if (pack.enabled && pack.masks) {
+      const filters = pack.filters || {};
+
+      // Organization type checkboxes
+      if (pack.masks.organization?.types?.length) {
+        const orgRow = document.createElement('div');
+        orgRow.className = 'pack-filter-row';
+        const orgLabel = document.createElement('span');
+        orgLabel.className = 'pack-filter-label';
+        orgLabel.textContent = 'Orgs:';
+        orgLabel.style.marginRight = '4px';
+        orgRow.appendChild(orgLabel);
+
+        const orgCbs = {};
+        for (const type of pack.masks.organization.types) {
+          const cb = createFilterChip(pack, 'organization', type,
+            filters.organization?.[type] !== false);
+          orgRow.appendChild(cb);
+          orgCbs[type] = cb;
+        }
+        wrapper.appendChild(orgRow);
+      }
+
+      // Program bucket checkboxes
+      if (pack.masks.program?.buckets?.length) {
+        const progRow = document.createElement('div');
+        progRow.className = 'pack-filter-row';
+        const progLabel = document.createElement('span');
+        progLabel.className = 'pack-filter-label';
+        progLabel.textContent = 'Progs:';
+        progLabel.style.marginRight = '4px';
+        progRow.appendChild(progLabel);
+
+        for (const bucket of pack.masks.program.buckets) {
+          const cb = createFilterChip(pack, 'program', bucket,
+            filters.program?.[bucket] !== false);
+          progRow.appendChild(cb);
+        }
+        wrapper.appendChild(progRow);
+      }
+
+      // Device toggle
+      if (pack.masks.device != null) {
+        const devRow = document.createElement('div');
+        devRow.className = 'pack-filter-row';
+        const devCb = createFilterChip(pack, 'device', null,
+          filters.device !== false);
+        devCb.querySelector('.filter-label-text').textContent =
+          `${pack.masks.device.count} devices`;
+        devRow.appendChild(devCb);
+        wrapper.appendChild(devRow);
+      }
+    }
+
+    packListEl.appendChild(wrapper);
+  }
+}
+
+/**
+ * Create a small checkbox chip for a type/bucket filter.
+ * Clicking it fires SET_PACK_FILTER to persist the change.
+ */
+function createFilterChip(pack, category, key, checked) {
+  const label = document.createElement('label');
+  label.className = 'filter-chip';
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = checked;
+  cb.addEventListener('change', async () => {
+    cb.disabled = true;
+    // Build updated filters from current DOM state for this pack
+    const wrapper = packListEl.querySelector(`[data-pack="${pack.name}"]`);
+    const newFilters = buildFiltersFromDOM(wrapper, pack);
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'SET_PACK_FILTER',
+        packName: pack.name,
+        filters: newFilters,
+      });
+      await loadPacks();
+    } catch (err) {
+      console.error('Curtain: filter update failed:', err);
+      cb.checked = !cb.checked;
+      cb.disabled = false;
+    }
+  });
+  const span = document.createElement('span');
+  span.className = `filter-label-text ${checked ? 'active' : ''}`;
+  span.textContent = key || '';
+  // Update style when checked state changes
+  cb.addEventListener('change', () => {
+    span.className = `filter-label-text ${cb.checked ? 'active' : ''}`;
+  });
+  label.appendChild(cb);
+  label.appendChild(span);
+  return label;
+}
+
+/**
+ * Walk the DOM sub-toggles for a pack and reconstruct the filters object.
+ */
+function buildFiltersFromDOM(wrapper, pack) {
+  const filters = {};
+  const rows = wrapper.querySelectorAll('.pack-filter-row');
+  for (const row of rows) {
+    const chips = row.querySelectorAll('.filter-chip input');
+    const labelEl = row.querySelector('.pack-filter-label');
+    const heading = labelEl?.textContent?.toLowerCase() || '';
+
+    if (heading.startsWith('orgs')) {
+      filters.organization = {};
+      for (const chip of chips) {
+        const name = chip.nextElementSibling?.textContent;
+        if (name) filters.organization[name] = chip.checked;
+      }
+    } else if (heading.startsWith('progs')) {
+      filters.program = {};
+      for (const chip of chips) {
+        const name = chip.nextElementSibling?.textContent;
+        if (name) filters.program[name] = chip.checked;
+      }
+    } else {
+      // Device row — single checkbox
+      filters.device = chips[0]?.checked ?? true;
+    }
+  }
+  return filters;
+}
+
+// Refresh the pack list (force re-fetch registry).
+packRefreshBtn.addEventListener('click', async () => {
+  packRefreshBtn.disabled = true;
+  packRefreshBtn.textContent = 'Refreshing...';
+  try {
+    await loadPacks();
+  } finally {
+    packRefreshBtn.disabled = false;
+    packRefreshBtn.textContent = 'Refresh Pack List';
+  }
+});
 
 // Initialize on load
 initialize();

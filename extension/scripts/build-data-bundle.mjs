@@ -4,15 +4,20 @@
  *
  * Generates `src/shared/data.js` from the workspace packages
  *   - @texturehq/curtain-core (presets: US demographics + address)
- *   - @texturehq/curtain-industries (energy industry pack + asset manifests)
+ *   - a small industry-NEUTRAL default org/program/device pool (inline below)
  *
- * Also copies the bundled asset directories from
- * `@texturehq/curtain-industries/assets/` into `extension/src/shared/` so
- * the MV3 content script can reference them at runtime (Chrome content
- * scripts can't import from node_modules).
+ * Industry-specific data (energy, medical, …) is NOT bundled here — it ships
+ * as opt-in packs under `packs/` and is merged at runtime. The neutral default
+ * keeps masking functional on first install (person PII + generic orgs)
+ * without favouring any single industry.
+ *
+ * Also copies the bundled asset directories (avatars + energy logos) from
+ * `@texturehq/curtain-industries/assets/` into `extension/src/shared/` so the
+ * MV3 content script can reference them at runtime (Chrome content scripts
+ * can't import from node_modules). Avatars are universal (fake person photos).
  *
  * IMPORTANT: data.js and the copied asset directories are generated.
- * Edit the source in `packages/industries/` instead.
+ * Edit the source in `packages/industries/` or `packages/core/` instead.
  */
 import { writeFileSync, mkdirSync, cpSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -23,9 +28,6 @@ import {
   US_ADDRESS_DEFAULT,
 } from '@texturehq/curtain-core';
 import {
-  ENERGY_ORGANIZATIONS,
-  ENERGY_PROGRAMS,
-  ENERGY_DEVICES,
   ENERGY_LOGO_MANIFEST,
   AVATAR_MANIFEST_V1,
   getAssetsDir,
@@ -55,7 +57,31 @@ console.log(`copied logos → ${logosDest}`);
 console.log(`copied avatars → ${avatarsDest}`);
 
 // ---------------------------------------------------------------------------
-// 2. Reshape package data → legacy content-script shape.
+// 2. Industry-neutral default pool.
+//
+// These are deliberately generic, cross-industry placeholders so the extension
+// works on first install without favouring any single vertical. Users enable
+// real industry packs (energy, medical, …) from the popup to get rich data.
+// ---------------------------------------------------------------------------
+const ORGANIZATIONS = [
+  { id: 'gen_001', name: 'Acme Corporation', type: 'business' },
+  { id: 'gen_002', name: 'Globex Industries', type: 'business' },
+  { id: 'gen_003', name: 'Initech Solutions', type: 'business' },
+  { id: 'gen_004', name: 'Northwind Traders', type: 'business' },
+  { id: 'gen_005', name: 'Umbrella Holdings', type: 'business' },
+];
+
+const PROGRAM_BUCKETS = {
+  general: {
+    weight: 1.0,
+    names: ['Loyalty Program', 'Referral Program', 'Premium Plan', 'Beta Program'],
+  },
+};
+
+const DEVICE_NAMES = ['Device', 'Sensor', 'Unit', 'Module'];
+
+// ---------------------------------------------------------------------------
+// 3. Reshape package data → legacy content-script shape.
 // `content.js` expects the same NAME_BUCKETS / LOCATION_REGIONS / etc. it
 // always has. Adapt the package output rather than rewriting content.js to
 // keep the diff small and lower the risk of breaking masking behaviour.
@@ -70,10 +96,6 @@ const LOCATION_REGIONS = Object.fromEntries(
     { weight: region.weight, states: region.states, cities: region.cities },
   ]),
 );
-
-const ORGANIZATIONS = ENERGY_ORGANIZATIONS;
-const PROGRAM_BUCKETS = ENERGY_PROGRAMS;
-const DEVICE_NAMES = ENERGY_DEVICES;
 
 const APPEARANCE_RANGE_WEIGHTS = { light: 0.35, medium: 0.35, dark: 0.30 };
 
@@ -113,8 +135,9 @@ const HEADER = `/**
  * Curtain — Shared Data (GENERATED — DO NOT EDIT BY HAND)
  *
  * Source of truth lives in:
- *   - @texturehq/curtain-core      (demographics, address pools)
- *   - @texturehq/curtain-industries (energy data + logo/avatar manifests + assets)
+ *   - @texturehq/curtain-core         (demographics, address pools — universal)
+ *   - build-data-bundle.mjs           (industry-neutral default pool — generic)
+ *   - packs/energy/data.json etc.     (industry packs — opt-in at runtime)
  *
  * Regenerate with: yarn --cwd extension build:data
  */

@@ -10,15 +10,68 @@ const {
   STREET_SUFFIXES,
   UNIT_DESIGNATORS,
   LOCATION_REGIONS,
-  ORGANIZATIONS,
-  PROGRAM_BUCKETS,
-  DEVICE_NAMES,
+  ORGANIZATIONS: CORE_ORGANIZATIONS,
+  PROGRAM_BUCKETS: CORE_PROGRAM_BUCKETS,
+  DEVICE_NAMES: CORE_DEVICE_NAMES,
   APPEARANCE_RANGE_WEIGHTS,
   PLACEHOLDER_AVATAR,
   PLACEHOLDER_LOGO,
   AVATAR_MANIFEST,
   LOGO_MANIFEST,
 } = window.CurtainData || {};
+
+// Mutable masking pools. The core bundle (energy industry + demographics) is
+// the base; enabled industry packs fetched from the registry are merged in at
+// runtime via CurtainPackMerge.mergePackData() (pack-merge.js, loaded by
+// manifest before this script).
+
+// Snapshot the core pools so we can merge mutable copies.
+const CORE_POOLS = {
+  organizations: Array.isArray(CORE_ORGANIZATIONS) ? CORE_ORGANIZATIONS : [],
+  programs: CORE_PROGRAM_BUCKETS || {},
+  devices: Array.isArray(CORE_DEVICE_NAMES) ? CORE_DEVICE_NAMES : [],
+};
+
+// Active masking pools — start as the core bundle and are extended by
+// mergePackData() after settings load.
+let ORGANIZATIONS = [...CORE_POOLS.organizations];
+let PROGRAM_BUCKETS = { ...CORE_POOLS.programs };
+let DEVICE_NAMES = [...CORE_POOLS.devices];
+
+// Program bucket cumulative weights are recomputed lazily because pack data
+// changes PROGRAM_BUCKETS at runtime (after settings load). See
+// selectProgramBucket().
+let programBucketNames = [];
+let programBucketCumulativeWeights = [];
+
+function recomputeProgramBucketWeights() {
+  programBucketNames = PROGRAM_BUCKETS ? Object.keys(PROGRAM_BUCKETS) : [];
+  programBucketCumulativeWeights = [];
+  let cumulative = 0;
+  for (const name of programBucketNames) {
+    cumulative += PROGRAM_BUCKETS[name].weight || 0;
+    programBucketCumulativeWeights.push(cumulative);
+  }
+}
+
+/**
+ * Merge enabled industry-pack data into the masking pools.
+ * Delegates to the shared CurtainPackMerge.mergePackData (pack-merge.js) and
+ * reassigns the mutable pools, then recomputes program-bucket weights.
+ */
+function mergePackData(packDataList) {
+  if (!window.CurtainPackMerge) {
+    console.warn('Curtain: CurtainPackMerge not loaded - pack data skipped');
+    return;
+  }
+  if (!Array.isArray(packDataList) || packDataList.length === 0) return;
+
+  const merged = window.CurtainPackMerge.mergePackData(CORE_POOLS, packDataList);
+  ORGANIZATIONS = merged.organizations;
+  PROGRAM_BUCKETS = merged.programs;
+  DEVICE_NAMES = merged.devices;
+  recomputeProgramBucketWeights();
+}
 
 let settings = null;
 let identityCache = {};
@@ -30,11 +83,14 @@ let piiReplacements = new Map(); // Maps original values to masked values for ti
 async function initialize() {
   // Guard: Exit if CurtainData failed to load (prevents runtime errors)
   // Include avatar/logo essentials that are required for new masking paths
-  if (!NAME_BUCKETS || !LOCATION_REGIONS || !ORGANIZATIONS || !PROGRAM_BUCKETS ||
+  if (!NAME_BUCKETS || !LOCATION_REGIONS || !ORGANIZATIONS.length || !Object.keys(PROGRAM_BUCKETS).length ||
       !APPEARANCE_RANGE_WEIGHTS || !PLACEHOLDER_AVATAR || !PLACEHOLDER_LOGO) {
     console.error('Curtain: CurtainData not loaded - extension disabled');
     return;
   }
+
+  // Seed the mutable program weights from the core bundle once at startup.
+  recomputeProgramBucketWeights();
 
   try {
     const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
@@ -44,6 +100,7 @@ async function initialize() {
     }
     settings = response.settings;
     identityCache = response.identityCache || {};
+    mergePackData(response.packDataList);
 
     updateDocumentState();
     processPiiElements();
@@ -685,6 +742,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .then((response) => {
         settings = response.settings;
         identityCache = response.identityCache || {};
+        mergePackData(response.packDataList);
         updateDocumentState();
         processPiiElements();
       })
@@ -698,7 +756,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Data is loaded from shared/data.js via window.CurtainData
 
 // Guard: Exit early if CurtainData failed to load
-if (!NAME_BUCKETS || !LOCATION_REGIONS || !ORGANIZATIONS || !PROGRAM_BUCKETS) {
+if (!NAME_BUCKETS || !LOCATION_REGIONS || !ORGANIZATIONS.length || !Object.keys(PROGRAM_BUCKETS).length) {
   console.error('Curtain: CurtainData not loaded - check manifest.json content_scripts order');
 }
 
@@ -901,24 +959,20 @@ function generateOrgName(rng) {
 
 // Program name buckets loaded from shared/data.js
 
-// Precompute cumulative weights for program buckets (guarded)
-const PROGRAM_BUCKET_NAMES = PROGRAM_BUCKETS ? Object.keys(PROGRAM_BUCKETS) : [];
-const PROGRAM_BUCKET_CUMULATIVE_WEIGHTS = [];
-let programCumulativeWeight = 0;
-for (const name of PROGRAM_BUCKET_NAMES) {
-  programCumulativeWeight += PROGRAM_BUCKETS[name].weight;
-  PROGRAM_BUCKET_CUMULATIVE_WEIGHTS.push(programCumulativeWeight);
-}
+// Cumulative program-bucket weights are maintained by
+// recomputeProgramBucketWeights(), called at startup and after every pack merge.
+// They are declared as mutable `let`s near the top of this file because pack
+// data extends PROGRAM_BUCKETS at runtime.
 
 // Select a program bucket based on weighted probability
 function selectProgramBucket(rng) {
   const roll = rng.nextFloat();
-  for (let i = 0; i < PROGRAM_BUCKET_CUMULATIVE_WEIGHTS.length; i++) {
-    if (roll < PROGRAM_BUCKET_CUMULATIVE_WEIGHTS[i]) {
-      return PROGRAM_BUCKET_NAMES[i];
+  for (let i = 0; i < programBucketCumulativeWeights.length; i++) {
+    if (roll < programBucketCumulativeWeights[i]) {
+      return programBucketNames[i];
     }
   }
-  return PROGRAM_BUCKET_NAMES[PROGRAM_BUCKET_NAMES.length - 1];
+  return programBucketNames[programBucketNames.length - 1];
 }
 
 // Generate program name from buckets

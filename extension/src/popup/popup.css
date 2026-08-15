@@ -465,3 +465,133 @@ input:disabled + .slider {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Industry packs */
+.pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.pack-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.pack-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pack-name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.pack-desc {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+  line-height: 1.35;
+}
+
+.pack-refresh-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pack-refresh-btn {
+  background: transparent;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pack-refresh-btn:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.pack-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Pack card wrapper — groups the main row + sub-toggle rows */
+.pack-card {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.pack-card .pack-row {
+  border: none;
+  border-radius: 0;
+}
+
+/* Sub-toggle filter rows shown when a pack is enabled */
+.pack-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--space-3) var(--space-2) var(--space-3);
+  border-top: 1px solid var(--gray-100);
+  padding-top: var(--space-2);
+}
+
+.pack-filter-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 32px;
+}
+
+/* Filter toggle chip — small checkbox + label */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.filter-label-text {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-300);
+  background: var(--gray-50);
+  color: var(--gray-500);
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.filter-label-text.active {
+  background: var(--brand-light);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  font-weight: 500;
+}

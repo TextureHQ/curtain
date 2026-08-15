@@ -2,8 +2,11 @@
   "manifest_version": 3,
   "name": "Curtain",
   "description": "Masks PII in your app for safe demos, screenshots, and screen shares.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "permissions": ["storage", "activeTab"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; connect-src 'self' https://cdn.jsdelivr.net"
+  },
   "host_permissions": [
     "https://*.texturehq.com/*",
     "https://localhost:*/*",
@@ -38,7 +41,7 @@
         "http://localhost:*/*",
         "file://*/*"
       ],
-      "js": ["src/shared/data.js", "src/content/content.js"],
+      "js": ["src/shared/data.js", "src/shared/pack-merge.js", "src/content/content.js"],
       "css": ["src/content/content.css"],
       "run_at": "document_start",
       "all_frames": true

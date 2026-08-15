@@ -46,11 +46,11 @@ test('NAME_BUCKETS has the original 5 demographic buckets', () => {
   );
 });
 
-test('ORGANIZATIONS contains exactly 60 energy orgs', () => {
+test('ORGANIZATIONS contains exactly 5 neutral default orgs', () => {
   const data = loadData(DATA_FILE);
-  assert.equal(data.ORGANIZATIONS.length, 60);
+  assert.equal(data.ORGANIZATIONS.length, 5);
   const ids = new Set(data.ORGANIZATIONS.map((o) => o.id));
-  assert.equal(ids.size, 60, 'org IDs must be unique');
+  assert.equal(ids.size, 5, 'org IDs must be unique');
 });
 
 test('LOCATION_REGIONS includes the 5 US regions', () => {

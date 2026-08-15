@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "packs": {
+    "energy": {
+      "name": "energy",
+      "displayName": "Energy & Utilities",
+      "description": "Fictional utilities, co-ops, and energy programs for masking utility and grid SaaS demos.",
+      "version": "1.0.0",
+      "dataPath": "packs/energy/data.json",
+      "hasLogos": true
+    },
+    "medical": {
+      "name": "medical",
+      "displayName": "Medical / Healthcare",
+      "description": "Fictional hospitals, clinics, and healthcare programs for masking medical SaaS demos.",
+      "version": "1.0.0",
+      "dataPath": "packs/medical/data.json",
+      "hasLogos": false
+    }
+  }
+}

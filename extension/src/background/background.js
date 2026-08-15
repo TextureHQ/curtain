@@ -9,6 +9,139 @@ const DEFAULT_ALLOWED_DOMAINS = [
   'local.texturehq.com',
 ];
 
+// ── Industry Pack Management ────────────────────────────────────────────────
+// Packs are community-contributed industry data (organizations, programs,
+// devices) that users opt into. The registry is fetched from jsdelivr so no
+// custom server is required — the repo is the source of truth.
+// Packs are serialized IndustryConfig objects (pure JSON, NOT code), so MV3
+// remote-code restrictions do not apply.
+
+// Packs are version-locked to the extension: the CDN path uses the extension's
+// own version (e.g. v1.3.0 → git tag v1.3.0). This means a given extension
+// release always pulls packs from the matching repo tag — reproducible and
+// immune to unreleased `main` drift.
+const EXTENSION_VERSION = chrome.runtime.getManifest().version;
+const PACK_REGISTRY_URL =
+  `https://cdn.jsdelivr.net/gh/TextureHQ/curtain@v${EXTENSION_VERSION}/packs/registry.json`;
+const PACK_DATA_BASE =
+  `https://cdn.jsdelivr.net/gh/TextureHQ/curtain@v${EXTENSION_VERSION}/`;
+const STORAGE_KEY_PACKS = 'curtain_packs'; // { registry, packs: { [name]: { enabled, data } } }
+const REGISTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Fetch the pack registry from jsdelivr. Returns null on failure.
+ * The registry is a lightweight JSON index listing every available pack.
+ */
+async function fetchPackRegistry() {
+  try {
+    const res = await fetch(PACK_REGISTRY_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const registry = await res.json();
+    return registry;
+  } catch (err) {
+    console.warn('Curtain: failed to fetch pack registry:', err);
+    return null;
+  }
+}
+
+/**
+ * Download a single pack's data.json from jsdelivr.
+ * Returns the parsed IndustryConfig or null on failure.
+ */
+async function downloadPackData(packName) {
+  try {
+    const url = `${PACK_DATA_BASE}packs/${packName}/data.json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn(`Curtain: failed to download pack "${packName}":`, err);
+    return null;
+  }
+}
+
+/**
+ * Merge downloaded pack data into the packs state and persist.
+ * Initializes default all-on filters for every type/bucket the pack declares.
+ */
+async function enablePack(packName) {
+  const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+  const packs = stored.packs || {};
+
+  // Skip if already enabled and cached
+  if (packs[packName]?.enabled && packs[packName]?.data) return;
+
+  const data = await downloadPackData(packName);
+  if (!data) return;
+
+  // Build default all-on filters from the pack's `masks` metadata.
+  const filters = {};
+  if (data.masks?.organization?.types) {
+    filters.organization = Object.fromEntries(data.masks.organization.types.map((t) => [t, true]));
+  }
+  if (data.masks?.program?.buckets) {
+    filters.program = Object.fromEntries(data.masks.program.buckets.map((b) => [b, true]));
+  }
+  if (data.masks?.device != null) {
+    filters.device = true;
+  }
+
+  packs[packName] = { enabled: true, data, filters };
+  await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: { ...stored, packs } });
+}
+
+/**
+ * Disable a pack — mark as disabled but keep cached data for re-enable.
+ */
+async function disablePack(packName) {
+  const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+  const packs = stored.packs || {};
+  if (packs[packName]) {
+    packs[packName] = { ...packs[packName], enabled: false };
+    await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: { ...stored, packs } });
+  }
+}
+
+/**
+ * Collect the raw data of every enabled (and cached) pack. The content script
+ * performs the actual merge into the core masking pools via the shared
+ * CurtainPackMerge.mergePackData helper. Returns an array of
+ * `{ name, data }` or null if no packs are enabled.
+ */
+async function getEnabledPackDataList() {
+  const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS];
+  if (!stored?.packs) return null;
+
+  const enabled = Object.entries(stored.packs)
+    .filter(([_, p]) => p.enabled && p.data)
+    .map(([name, p]) => ({ name, data: p.data, filters: p.filters || null }));
+
+  return enabled.length > 0 ? enabled : null;
+}
+
+/**
+ * Build a clean state object for the popup: the registry (list of available
+ * packs) plus per-pack enabled/cached status.
+ */
+async function getPackState() {
+  const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+  const registry = stored.registry || null;
+  const packs = stored.packs || {};
+
+  const availablePacks = registry?.packs ? Object.entries(registry.packs).map(([name, meta]) => ({
+    name,
+    displayName: meta.displayName || name,
+    description: meta.description || '',
+    version: meta.version || '0.0.0',
+    enabled: !!packs[name]?.enabled,
+    cached: !!packs[name]?.data,
+    filters: packs[name]?.filters || null,
+    masks: (packs[name]?.data?.masks) ? { ...packs[name].data.masks } : null,
+  })) : [];
+
+  return { registryVersion: registry?.version ?? null, availablePacks };
+}
+
 const DEFAULT_SETTINGS = {
   enabled: true,
   seed: generateSeed(),
@@ -102,6 +235,31 @@ async function initializeSettings() {
     await chrome.storage.local.set({ settings: mergeWithDefaults(existing.settings) });
   }
   await updateBadge();
+  // Kick off a pack-registry refresh in the background (TTL-cached).
+  // Fire-and-forget: masking works fine with zero packs enabled.
+  refreshPackRegistryIfStale();
+}
+
+/**
+ * Refresh the pack registry once per TTL window. The registry is a small
+ * JSON index; pack *data* is only downloaded when a user opts a pack in.
+ */
+async function refreshPackRegistryIfStale() {
+  try {
+    const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+    const fetchedAt = stored.registryFetchedAt || 0;
+    if (Date.now() - fetchedAt < REGISTRY_CACHE_TTL_MS && stored.registry) {
+      return; // Fresh enough — don't hit the network.
+    }
+    const registry = await fetchPackRegistry();
+    if (registry) {
+      stored.registry = registry;
+      stored.registryFetchedAt = Date.now();
+      await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: stored });
+    }
+  } catch (err) {
+    console.warn('Curtain: pack registry refresh failed:', err);
+  }
 }
 
 async function updateBadge() {
@@ -120,6 +278,11 @@ async function updateBadge() {
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local' && changes.settings) {
     updateBadge();
+    notifyAllTabs();
+  }
+  // When pack data changes (enabled/disabled), re-broadcast so open tabs
+  // re-merge the pack data into their masking pools.
+  if (namespace === 'local' && changes[STORAGE_KEY_PACKS]) {
     notifyAllTabs();
   }
 });
@@ -197,7 +360,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!settings || settings.seed !== normalized.seed || !Array.isArray(settings.allowedDomains)) {
         await chrome.storage.local.set({ settings: normalized });
       }
-      sendResponse({ settings: normalized, identityCache: identityCache || {} });
+      const packDataList = await getEnabledPackDataList();
+      sendResponse({
+        settings: normalized,
+        identityCache: identityCache || {},
+        packDataList,
+      });
     });
     return true;
   }
@@ -234,6 +402,52 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       await chrome.storage.local.set({ identityCache: newCache });
       sendResponse({ success: true });
     });
+    return true;
+  }
+
+  if (message.type === 'FETCH_PACK_REGISTRY') {
+    // Force a fresh registry fetch (bypasses cache for manual refresh)
+    fetchPackRegistry().then(async (registry) => {
+      if (registry) {
+        const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+        stored.registry = registry;
+        stored.registryFetchedAt = Date.now();
+        await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: stored });
+      }
+      const packsState = await getPackState();
+      sendResponse({ success: !!registry, ...packsState });
+    });
+    return true;
+  }
+
+  if (message.type === 'TOGGLE_PACK') {
+    const { packName, enabled } = message;
+    (async () => {
+      if (enabled) {
+        await enablePack(packName);
+      } else {
+        await disablePack(packName);
+      }
+      const packDataList = await getEnabledPackDataList();
+      const packsState = await getPackState();
+      sendResponse({ success: true, ...packsState, packDataList });
+    })();
+    return true;
+  }
+
+  if (message.type === 'SET_PACK_FILTER') {
+    const { packName, filters } = message;
+    (async () => {
+      const stored = (await chrome.storage.local.get([STORAGE_KEY_PACKS]))[STORAGE_KEY_PACKS] || {};
+      const packs = stored.packs || {};
+      if (packs[packName]?.data) {
+        packs[packName] = { ...packs[packName], filters };
+        await chrome.storage.local.set({ [STORAGE_KEY_PACKS]: { ...stored, packs } });
+      }
+      const packDataList = await getEnabledPackDataList();
+      const packsState = await getPackState();
+      sendResponse({ success: true, ...packsState, packDataList });
+    })();
     return true;
   }
 });

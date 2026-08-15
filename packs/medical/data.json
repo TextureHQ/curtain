@@ -1,0 +1,68 @@
+{
+  "name": "medical",
+  "masks": {
+    "organization": {
+      "count": 10,
+      "types": ["hospital", "clinic", "practice"]
+    },
+    "program": {
+      "count": 32,
+      "buckets": ["care", "screening", "specialty"]
+    },
+    "device": {
+      "count": 15
+    }
+  },
+  "organizations": [
+    { "id": "med_001", "name": "Riverside Medical Center", "type": "hospital" },
+    { "id": "med_002", "name": "Crossroads Community Health", "type": "clinic" },
+    { "id": "med_003", "name": "Westlake Surgical Associates", "type": "practice" },
+    { "id": "med_004", "name": "Bayside Family Medicine", "type": "practice" },
+    { "id": "med_005", "name": "Meridian Health Partners", "type": "hospital" },
+    { "id": "med_006", "name": "Clearspring Pediatrics", "type": "clinic" },
+    { "id": "med_007", "name": "Oakwood Urgent Care", "type": "clinic" },
+    { "id": "med_008", "name": "Summit Cardiology Group", "type": "practice" },
+    { "id": "med_009", "name": "NorthStar Medical Group", "type": "hospital" },
+    { "id": "med_010", "name": "Pinecrest Behavioral Health", "type": "clinic" }
+  ],
+  "programs": {
+    "care": {
+      "weight": 0.40,
+      "names": [
+        "Chronic Care Management", "Wellness Program", "Care Coordination",
+        "Patient Navigation", "Health Coaching", "Remote Monitoring",
+        "Telehealth Program", "Virtual Care", "Home Health",
+        "Transitional Care", "Preventive Health", "Disease Management"
+      ]
+    },
+    "screening": {
+      "weight": 0.30,
+      "names": [
+        "Annual Wellness Visit", "Health Risk Assessment", "Preventive Screening",
+        "Cancer Screening Program", "Cardiovascular Screening", "Diabetes Prevention",
+        "Mental Health Screening", "Immunization Program", "Well-Child Check",
+        "School Physical Program"
+      ]
+    },
+    "specialty": {
+      "weight": 0.30,
+      "names": [
+        "Orthopedic Care", "Cardiac Rehab", "Stroke Recovery",
+        "Pulmonary Rehab", "Pain Management", "Physical Therapy",
+        "Occupational Therapy", "Speech Therapy", "Wound Care",
+        "Infusion Services"
+      ]
+    }
+  },
+  "devices": [
+    "Blood Pressure Monitor", "Glucose Meter", "Pulse Oximeter",
+    "ECG Patch", "Weight Scale", "CPAP Machine", "Insulin Pump",
+    "Nebulizer", "Thermometer", "Oxygen Concentrator",
+    "Fall Detection Pendant", "Smart Pill Dispenser", "Activity Tracker",
+    "Sleep Monitor", "Spirometer"
+  ],
+  "emailDomains": [
+    "medcenter.com", "healthcare.org", "clinic.com", "medical.com",
+    "healthpartners.com", "familypractice.com"
+  ]
+}
